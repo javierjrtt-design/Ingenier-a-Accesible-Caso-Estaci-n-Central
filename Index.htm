@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Trigonométrico Pro: Estación Central</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
+        body { font-family: 'DM Sans', sans-serif; background-color: #f1f5f9; }
+        .canvas-container { background: #ffffff; border: 2px solid #cbd5e1; border-radius: 12px; position: relative; background-image: radial-gradient(#cbd5e1 1px, transparent 1px); background-size: 20px 20px; }
+        .status-badge { transition: all 0.3s ease; }
+        input[type="range"]::-webkit-slider-thumb { border: 2px solid #003366; height: 20px; width: 20px; border-radius: 50%; background: white; cursor: pointer; appearance: none; margin-top: -8px; }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <div class="max-w-7xl mx-auto bg-white shadow-2xl rounded-2xl overflow-hidden border border-slate-200">
+        <!-- Header -->
+        <div class="bg-[#003366] p-6 text-white flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <h1 class="text-3xl font-bold flex items-center gap-3">
+                    <i class="fa-solid fa-building-columns text-[#11caa0]"></i>
+                    Ingeniería Accesible: Caso Estación Central
+                </h1>
+                <p class="text-blue-100 mt-1">Laboratorio de Trigonometría y Diseño Universal</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="exportData()" class="bg-[#11caa0] hover:bg-[#0ea885] text-[#003366] font-bold py-2 px-4 rounded-lg text-sm transition flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i> Exportar Datos
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-0">
+            <!-- Panel Lateral (Controles) -->
+            <div class="lg:col-span-4 p-6 bg-slate-50 border-r border-slate-200 space-y-6">
+                
+                <section>
+                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-widest mb-4">Variables de Diseño</h2>
+                    <div class="space-y-6">
+                        <!-- Altura -->
+                        <div>
+                            <div class="flex justify-between mb-2 text-sm">
+                                <span class="font-bold text-slate-700">Desnivel Vertical (h)</span>
+                                <span class="text-[#003366] font-mono font-bold" id="val-height">1.50 m</span>
+                            </div>
+                            <input type="range" id="input-height" min="0.5" max="2.5" step="0.1" value="1.5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#003366]">
+                        </div>
+                        <!-- Ángulo -->
+                        <div>
+                            <div class="flex justify-between mb-2 text-sm">
+                                <span class="font-bold text-slate-700">Ángulo de Inclinación (&theta;)</span>
+                                <span class="text-[#003366] font-mono font-bold" id="val-angle">6.0°</span>
+                            </div>
+                            <input type="range" id="input-angle" min="2" max="15" step="0.1" value="6" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#11caa0]">
+                        </div>
+                    </div>
+                </section>
+
+                <hr>
+
+                <section id="status-card" class="p-5 rounded-xl border-l-8 bg-white shadow-sm border-emerald-500">
+                    <h3 class="font-bold text-emerald-800 flex items-center gap-2" id="status-title">
+                        <i class="fa-solid fa-check-circle"></i> Norma A.120 Cumplida
+                    </h3>
+                    <p class="text-sm text-emerald-700 mt-1" id="status-desc">El diseño permite autonomía total para usuarios en silla de ruedas.</p>
+                </section>
+
+                <section class="bg-[#003366] text-white p-5 rounded-xl shadow-lg">
+                    <h3 class="text-xs font-bold text-blue-300 uppercase mb-3">Resultados Trigonométricos</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-[10px] text-blue-200 uppercase">Base (B)</p>
+                            <p class="text-2xl font-mono font-bold" id="res-base">14.27m</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-blue-200 uppercase">Rampa (L)</p>
+                            <p class="text-2xl font-mono font-bold" id="res-hypo">14.35m</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Sugerencia IA -->
+                <section class="bg-amber-50 border border-amber-200 p-4 rounded-xl">
+                    <h3 class="text-amber-800 font-bold text-sm mb-2"><i class="fa-solid fa-robot"></i> Asistente de Prompt IA</h3>
+                    <p class="text-xs text-amber-700 mb-3">Si el espacio no es suficiente, prueba este prompt en tu IA:</p>
+                    <div class="bg-white p-2 rounded border border-amber-300 text-[11px] font-mono text-slate-600 mb-2" id="ai-prompt">
+                        "IA, dado un desnivel de 1.5m y un espacio de 12m, diseña una rampa con descanso central de 1.5m que cumpla con 6 grados..."
+                    </div>
+                    <button onclick="copyPrompt()" class="w-full text-[10px] font-bold text-amber-800 uppercase hover:underline">Copiar Prompt</button>
+                </section>
+            </div>
+
+            <!-- Área de Visualización -->
+            <div class="lg:col-span-8 p-6 md:p-10 flex flex-col">
+                <!-- Info Header -->
+                <div class="flex justify-between items-start mb-10">
+                    <div>
+                        <h2 class="text-2xl font-bold text-slate-800">Visualización de Ingeniería</h2>
+                        <p class="text-slate-500 text-sm">Análisis de colisión con estructura existente.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-xs font-bold text-slate-400 block uppercase">Límite Estación Central</span>
+                        <span class="text-xl font-bold text-red-500">12.00 metros</span>
+                    </div>
+                </div>
+
+                <!-- Canvas -->
+                <div class="canvas-container w-full h-96 flex items-end justify-start p-12 overflow-visible">
+                    
+                    <!-- Triangle Visual -->
+                    <div id="triangle-viz" class="relative transition-all duration-500 origin-bottom-left" style="width: 400px; height: 100px;">
+                        <!-- Base Line -->
+                        <div id="viz-base" class="absolute bottom-0 left-0 h-1 bg-slate-800"></div>
+                        <!-- Hypotenuse -->
+                        <div id="viz-hypo" class="absolute bottom-0 left-0 h-2 bg-[#11caa0] origin-left rounded-full shadow-lg"></div>
+                        <!-- Vertical Height -->
+                        <div id="viz-height" class="absolute bottom-0 right-0 w-1 bg-blue-500"></div>
+                        
+                        <!-- Measurement Labels -->
+                        <div id="label-h" class="absolute right-[-50px] top-1/2 -translate-y-1/2 font-bold text-blue-500 text-sm">h</div>
+                        <div id="label-b" class="absolute bottom-[-35px] left-1/2 -translate-x-1/2 font-bold text-slate-800 text-sm">Base</div>
+                        <div class="absolute bottom-2 left-6 text-sm font-bold text-[#11caa0]">&theta;</div>
+                    </div>
+
+                    <!-- Columna de la Estación -->
+                    <div id="limit-line" class="absolute bottom-0 border-l-4 border-dashed border-red-500 h-80 z-20 flex flex-col justify-start">
+                        <div class="bg-red-500 text-white text-[10px] font-bold p-1 px-2 -ml-1 rounded shadow-lg uppercase">
+                            Impacto Estructural
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Feedback Area -->
+                <div id="audit-box" class="mt-auto p-6 rounded-2xl border-2 border-slate-100 bg-slate-50 flex items-center gap-6 transition-all">
+                    <div id="audit-icon" class="text-4xl">
+                        <i class="fa-solid fa-circle-check text-emerald-500"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800" id="audit-title">Análisis de Viabilidad</h4>
+                        <p class="text-sm text-slate-600" id="audit-text">Calculando impacto en el corredor de la Estación Central...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="bg-slate-50 p-4 border-t border-slate-200 text-center text-[11px] text-slate-400">
+            <strong>Recurso Interactivo de Ingeniería</strong> | Autor: Javier Trigoso | Unidad de Matemáticas Aplicadas - Lima 2024
+        </div>
+    </div>
+
+    <script>
+        const inputHeight = document.getElementById('input-height');
+        const inputAngle = document.getElementById('input-angle');
+        const valHeight = document.getElementById('val-height');
+        const valAngle = document.getElementById('val-angle');
+        const resBase = document.getElementById('res-base');
+        const resHypo = document.getElementById('res-hypo');
+        const aiPrompt = document.getElementById('ai-prompt');
+
+        const vizTriangle = document.getElementById('triangle-viz');
+        const vizBase = document.getElementById('viz-base');
+        const vizHypo = document.getElementById('viz-hypo');
+        const vizHeight = document.getElementById('viz-height');
+        const limitLine = document.getElementById('limit-line');
+        
+        const statusCard = document.getElementById('status-card');
+        const statusTitle = document.getElementById('status-title');
+        const statusDesc = document.getElementById('status-desc');
+        
+        const auditBox = document.getElementById('audit-box');
+        const auditIcon = document.getElementById('audit-icon');
+        const auditTitle = document.getElementById('audit-title');
+        const auditText = document.getElementById('audit-text');
+
+        const LIMIT_SPACE = 12.0; 
+        const SCALE = 45; 
+
+        function update() {
+            const h = parseFloat(inputHeight.value);
+            const deg = parseFloat(inputAngle.value);
+            const rad = deg * (Math.PI / 180);
+
+            // Cálculos
+            const B = h / Math.tan(rad);
+            const L = h / Math.sin(rad);
+
+            // UI Texto
+            valHeight.innerText = h.toFixed(2) + " m";
+            valAngle.innerText = deg.toFixed(1) + "°";
+            resBase.innerText = B.toFixed(2) + " m";
+            resHypo.innerText = L.toFixed(2) + " m";
+
+            // Visualización
+            const wPx = B * SCALE;
+            const hPx = h * SCALE;
+            
+            vizTriangle.style.width = wPx + "px";
+            vizTriangle.style.height = hPx + "px";
+            vizBase.style.width = wPx + "px";
+            vizHeight.style.height = hPx + "px";
+            
+            const hypoLen = Math.sqrt(wPx*wPx + hPx*hPx);
+            vizHypo.style.width = hypoLen + "px";
+            vizHypo.style.transform = `rotate(${-deg}deg)`;
+
+            limitLine.style.left = (LIMIT_SPACE * SCALE + 48) + "px";
+
+            // Prompt IA Dinámico
+            aiPrompt.innerText = `"IA, dado un desnivel de ${h}m y un espacio máximo de ${LIMIT_SPACE}m, ¿cuál es el diseño óptimo en zigzag si debo respetar el ángulo de ${deg}°?"`;
+
+            // Lógica de Semáforo Normativo
+            if (deg <= 6) {
+                statusCard.className = "p-5 rounded-xl border-l-8 bg-white shadow-sm border-emerald-500";
+                statusTitle.innerHTML = `<i class="fa-solid fa-check-circle"></i> Norma A.120 Cumplida`;
+                statusDesc.innerText = "Accesibilidad universal garantizada.";
+            } else if (deg <= 10) {
+                statusCard.className = "p-5 rounded-xl border-l-8 bg-white shadow-sm border-amber-500";
+                statusTitle.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Accesibilidad Limitada`;
+                statusDesc.innerText = "Requiere asistencia física. No apto para autonomía.";
+            } else {
+                statusCard.className = "p-5 rounded-xl border-l-8 bg-white shadow-sm border-red-500";
+                statusTitle.innerHTML = `<i class="fa-solid fa-ban"></i> Incumplimiento Grave`;
+                statusDesc.innerText = "Diseño peligroso e ilegal bajo norma técnica.";
+            }
+
+            // Lógica de Auditoría de Espacio
+            if (B > LIMIT_SPACE) {
+                const diff = (B - LIMIT_SPACE).toFixed(2);
+                auditBox.className = "mt-auto p-6 rounded-2xl border-2 border-red-100 bg-red-50 flex items-center gap-6";
+                auditIcon.innerHTML = `<i class="fa-solid fa-circle-xmark text-red-500"></i>`;
+                auditTitle.innerText = "Colisión Detectada";
+                auditText.innerHTML = `La rampa excede el espacio disponible por <b>${diff} metros</b>. Es imposible construir esta rampa recta.`;
+            } else {
+                auditBox.className = "mt-auto p-6 rounded-2xl border-2 border-emerald-100 bg-emerald-50 flex items-center gap-6";
+                auditIcon.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500"></i>`;
+                auditTitle.innerText = "Espacio Viable";
+                auditText.innerText = `La rampa cabe perfectamente en el corredor de la estación.`;
+            }
+        }
+
+        function copyPrompt() {
+            const text = aiPrompt.innerText;
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            alert("Prompt copiado al portapapeles. ¡Pégalo en tu IA!");
+        }
+
+        function exportData() {
+            const data = {
+                autor: "Javier Trigoso",
+                altura: valHeight.innerText,
+                angulo: valAngle.innerText,
+                base_calculada: resBase.innerText,
+                rampa_calculada: resHypo.innerText,
+                estatus: statusTitle.innerText
+            };
+            console.table(data);
+            alert("Datos exportados a la consola del navegador (F12). En una versión real, aquí se generaría un reporte PDF.");
+        }
+
+        inputHeight.addEventListener('input', update);
+        inputAngle.addEventListener('input', update);
+        update();
+    </script>
+</body>
+</html>
